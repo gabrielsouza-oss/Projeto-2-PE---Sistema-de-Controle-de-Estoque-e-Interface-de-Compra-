@@ -2,6 +2,50 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct produto_estoque{
+  //Estrutura para armazenar os registros do banco de dados de produtos
+  char *codigo;
+  char *nome;
+  float preco;
+  int estoque;
+};
+
+void bubbleSort(struct produto_estoque *x, int max,int asc){
+  //Ordena a Stuct de Produtos com base na disponibilidade do estoque de forma crescente ou decrescente
+  int maior,cont=0;  
+  for (int i=0;i<max;i++){
+    maior = x[0].estoque;
+    cont=0;
+    for (int j=1;j<max-1;j++){
+      if(asc==1){  
+        if(x[j].estoque>maior){ 
+        maior = x[j].estoque;
+        cont+=1;
+        }
+        else{
+          struct produto_estoque temp = x[cont];
+          x[cont]=x[j];
+          x[j]=temp;
+          cont+=1;
+        }
+      }
+      else{
+        if(x[j].estoque<maior){ 
+        maior = x[j].estoque;
+        cont+=1;
+        }
+        else{
+          struct produto_estoque temp = x[cont];
+          x[cont]=x[j];
+          x[j]=temp;
+          cont+=1;
+        }
+      }
+    }
+    max--;  
+  }
+}
+
 int deletar_dados(char* filename){
   //Função para deletar dados do Produto (Funcionário)
   FILE *aquivo_banco, *arquivo_temp;
@@ -56,6 +100,7 @@ int deletar_dados(char* filename){
     else if(conf == 'n'){
     printf("\nAção de Deleção cancelada!");
     sair=1;
+    menu_acao_func();
     return(0);
     }
     else{
@@ -74,7 +119,7 @@ int deletar_dados(char* filename){
       if (cont!=linha_deletar){
           putc(ch, arquivo_temp);
       }
-      if (ch == '\n'){
+      if (ch=='\n'){
           cont++;}
   }
   //Fecha os arquivos e Renomeia o arquivo temporário para o nome original do banco de dados
@@ -94,6 +139,7 @@ int deletar_dados(char* filename){
 
 int printar_banco_func(FILE *aquivo_banco,int back_menu){
   //Função de Consultar o estoque de produtos (Funcionário)
+
   //Abre o banco de dados de produtos e printa todos os registros encontrados para o funcionário
   printf("\n|-------------- Banco de Dados Estoque - Acesso Funcionário --------------|\n");
   char ch;
@@ -102,7 +148,7 @@ int printar_banco_func(FILE *aquivo_banco,int back_menu){
       ch = getc(aquivo_banco);
   }
 
-  //Parametro que indice se deve mostrar a tela de voltar ao menu de ação após printar ou não
+  //Parametro que indica se deve mostrar a tela de voltar ao menu de ação após printar
   if(back_menu==1){
     menu_acao_func();
   }
@@ -113,90 +159,8 @@ int printar_banco_func(FILE *aquivo_banco,int back_menu){
   return 0;
 }
 
-struct produto_estoque{
-  //Estrutura para armazenar os registroes do banco de dados de produtos
-  char *codigo;
-  char *nome;
-  float preco;
-  int estoque;
-};
-
-int comprar_cliente(char* filename){
-  //Função de Compra do Cliente (Cliente)
-  FILE *aquivo_banco, *arquivo_temp;
-
-  //Abre o banco de produtos no modo de leitura
-  aquivo_banco = fopen(filename, "r");
-  int tam=1;
-
-  //Varre todas as linhas do banco e conta as quebrar de linhas para saber o total de registros no banco 
-  char ch;
-  while (ch!=EOF){
-      ch = getc(aquivo_banco);
-      if (ch == '\n'){
-          tam++;}
-  }
-
-  //Usa a Struct do produto para armazenar os dados referentes ao produto, obtidos do banco de dados
-  struct produto_estoque *produtos_cliente = malloc(sizeof(struct produto_estoque)*tam);
-
-  int produtos_validos=0;
-  rewind(aquivo_banco);
-  for(int i=0;i<tam;i++){
-
-    ch = getc(aquivo_banco);
-    char *cod = malloc(sizeof(char)*(ch+1));
-    char *nome = malloc(sizeof(char)*(ch+1));
-    float preco;
-    int qtd;
-
-    //Lê as informações do produto do banco de dados
-    fscanf(aquivo_banco, "%s %s %f %d", cod, nome, &preco, &qtd);
-
-    //Seleciona apenas os produtos com estoque não nulo e armazena num vetor da struct!
-    if (qtd>0){
-      produtos_cliente[produtos_validos].codigo = cod;
-      produtos_cliente[produtos_validos].nome = nome;
-      produtos_cliente[produtos_validos].preco = preco;
-      produtos_cliente[produtos_validos].estoque = qtd;
-      produtos_validos++;
-    }
-  }
-  //Printa todos os produtos disponiveis para o cliente, armazenados na struct
-  printf("\n|--------- |Magazine-UFABC| Produtos Disponíveis a Pronta-entrega! ---------|\n");
-
-  for (int i=0;i<tam-1;i++){
-  printf("\n (%d) Produto: %s | Preço R$ %.2f", i,produtos_cliente[i].nome,produtos_cliente[i].preco);
-  }
-
-  int produto_escolhido, quantidade;
-  float total;
-  //Recebe input do produto desejado pelo cliente
-  do{
-    printf("\n\n Escolha o Número do Produto de Desejado:\n ");
-    scanf("%d", &produto_escolhido);
-  }while(produto_escolhido>tam-1||produto_escolhido<0);
-
-  //Recebe input da qtd desejada pelo cliente
-  do{
-    printf("\n Insira a Quantidade Total de Compra:\n ");
-    scanf("%d", &quantidade);
-    if(quantidade > produtos_cliente[produto_escolhido].estoque){
-      //Verfica a disponibilidade da quantia desejada no estoque
-      printf("\n Quantidade Indiponível no Estoque! Insira uma quantidade inferior");
-    }
-  }while(quantidade > produtos_cliente[produto_escolhido].estoque || quantidade<0);
-
-  //Calcula o total da compra e Mostra um resumo do pedido ao cliente
-  total = quantidade*produtos_cliente[produto_escolhido].preco;
-  printf("\n Pedido de número #%d realizado com Sucesso!\n |---------------------------------------------|\n Resumo da Compra \n Items Ordenados: %d unidade(s), %s \n Total da Compra: R$ %.2f",rand() % 8000,quantidade,produtos_cliente[produto_escolhido].nome,total);
-
-  return 0;
-}
-
 int login_func(char* filename){
   //Função de login do funcionário (Funcionário)
-
   FILE *Banco;
 
   //Alocando as string de login e senha inputadas e do banco de dados
@@ -250,7 +214,6 @@ int login_func(char* filename){
 int menu_acao_func(){
   //Menu de ações disponiveis para o funcionário, chama as demais funcoes
   int acao;
-  FILE *aquivo_banco;
 
   do{
   printf("\nQual ação você deseja realizar?");
@@ -262,8 +225,7 @@ int menu_acao_func(){
       deletar_dados("banco_produtos.txt");
       return acao;
     case 1:
-      aquivo_banco = fopen("banco_produtos.txt", "r");
-      printar_banco_func(aquivo_banco,1);
+      consulta_dados_func();
       return acao;
     case 3:
       return acao;
@@ -275,32 +237,205 @@ int menu_acao_func(){
   return (acao);
 }
 
-int main(){
+struct produto_estoque *lista_produtos(int cliente,char *filename){
+  //Função para ler os dados do banco e passar para Struct de Cliente ou funcionario
 
-int escolha, login;
-//Escolhe se é cliente ou funcionário
-do{
-  printf("\n| ******** |Magazine-UFABC| Seja bem-vindo ao Sistema de Controle de Estoque e Interface de Compra da Magazine-UFABC! ********|\n\n Por favor, escolha o seu tipo de Acesso:");
+  FILE *aquivo_banco, *arquivo_temp;
+  //Abre o banco de produtos no modo de leitura
+  aquivo_banco = fopen(filename, "r");
+  int tam=1;
+  //Varre todas as linhas do banco e conta as quebrar de linhas para saber o total de registros no banco 
+  char ch;
+  while (ch!=EOF){
+      ch = getc(aquivo_banco);
+      if (ch == '\n'){
+          tam++;}
+  }
 
-  printf("\n (0) Acesso Funcionário | Controle Estoque\n (1) Acesso Cliente | Interface Compra\n ");
+  //Usa a Struct do produto para armazenar os dados referentes ao produto, obtidos do banco de dados
+  struct produto_estoque *produtos_cliente = malloc(sizeof(struct produto_estoque)*tam);
 
-  scanf("%d", &escolha);
-}while(escolha!=0 && escolha!=1);
+  rewind(aquivo_banco);
+  ch='o';
+  int produtos_validos=0;
+  for(int i=0;i<tam;i++){
 
-if (escolha==1){
-  //Cliente
- comprar_cliente("banco_produtos.txt"); 
+    ch = fgetc(aquivo_banco);
+    char *cod = malloc(sizeof(char)*(ch+1));
+    char *nome = malloc(sizeof(char)*(ch+1));
+    float preco;
+    int qtd;
+
+    //Lê as informações do produto do banco de dados
+    fscanf(aquivo_banco, "%s %s %f %d", cod, nome, &preco, &qtd);
+
+    // e armazena num vetor da struct!
+    if (cliente==0){
+      produtos_cliente[i].codigo = cod;
+      produtos_cliente[i].nome = nome;
+      produtos_cliente[i].preco = preco;
+      produtos_cliente[i].estoque = qtd;
+    }
+    else{
+      if (qtd>0){
+      produtos_cliente[produtos_validos].codigo = cod;
+      produtos_cliente[produtos_validos].nome = nome;
+      produtos_cliente[produtos_validos].preco = preco;
+      produtos_cliente[produtos_validos].estoque = qtd;
+      produtos_validos++;
+      }
+    }
+  }
+  return (produtos_cliente);
 }
-else{
-  //Funcionario
-  login = login_func("Banco.txt");
-  if (login==1){
-    menu_acao_func();
+
+int consulta_dados_func(){
+  FILE *aquivo_banco;
+  int tipo_consulta,tam=1,match=0;
+  char *produto_desejado = malloc(sizeof(char)*7);
+
+  struct produto_estoque*produtos_funcio = lista_produtos(0,"banco_produtos.txt");
+
+  printf("\nSelecione o tipo de consulta que deseja fazer: \n(1) Consultar estoque de um produto \n(2) Consultar os produtos com Maior estoque \n(3) Consultar os produtos com Menor Estoque\n ");
+
+  //Abre o banco de produtos no modo de leitura
+  char* filename = "banco_produtos.txt";
+  aquivo_banco = fopen(filename, "r");
+
+  //Varre todas as linhas do banco e conta as quebrar de linhas para saber o total de registros no banco 
+  char ch;
+  while (ch!=EOF){
+      ch = getc(aquivo_banco);
+      if (ch=='\n'){
+          tam++;}
+  }
+  scanf("%d", &tipo_consulta);
+  rewind(aquivo_banco);
+  fclose(aquivo_banco);
+
+  switch(tipo_consulta){
+    case 1:
+      for (int i=0;i<tam-1;i++){
+      printf("\nCódigo: %s | Produto: %s",produtos_funcio[i].codigo,produtos_funcio[i].nome);
+      }
+      printf("\nInsira o Código do produto que deve ser consultado\n");
+      scanf("%s",produto_desejado);
+
+      for (int i=0;i<tam-1;i++){
+        if(strcmp(produtos_funcio[i].codigo,produto_desejado)==0){
+          printf("\nCódigo: %s \nProduto: %s \nPreço: R$ %.2f \nQuantidade: %d\n",produtos_funcio[i].codigo,produtos_funcio[i].nome,produtos_funcio[i].preco, produtos_funcio[i].estoque);
+          free(produtos_funcio); 
+          match = 1;
+          break;
+        } 
+      }
+      if (match==0){
+        printf("\n Código do Produto Inválido, voltando ao Menu!");
+        menu_acao_func();
+      }
+      else{
+       menu_acao_func(); 
+       return 0; 
+      }
+      break;
+    case 2:
+      bubbleSort(produtos_funcio,tam,0);
+      for (int i=0;i<tam-1;i++){
+      printf("\n Produto: %s | Estoque %d",produtos_funcio[i].nome,produtos_funcio[i].estoque);}
+      printf("\n");
+      free(produtos_funcio); 
+      menu_acao_func();
+      break;
+    case 3:
+      bubbleSort(produtos_funcio,tam,1);
+      for (int i=0;i<tam-1;i++){
+      printf("\n Produto: %s | Estoque %d",produtos_funcio[i].nome,produtos_funcio[i].estoque);}
+      printf("\n");
+      free(produtos_funcio);
+      menu_acao_func(); 
+      break;
+    default:
+      printf("\nOpção inválida, retornando às opções!");
+      consulta_dados_func();
+  }
+  return 0;
+} 
+
+int comprar_cliente(char* filename){
+  //Função de Compra do Cliente (Cliente)
+  FILE *aquivo_banco, *arquivo_temp;
+
+  //Abre o banco de produtos no modo de leitura
+  aquivo_banco = fopen(filename, "r");
+  int tam=1;
+
+  //Varre todas as linhas do banco e conta as quebrar de linhas para saber o total de registros no banco 
+  char ch;
+  while (ch!=EOF){
+      ch = getc(aquivo_banco);
+      if (ch == '\n'){
+          tam++;}
+  }
+  fclose(aquivo_banco);
+  //Usa a Struct do produto para armazenar os dados referentes ao produto, obtidos do banco de dados
+  struct produto_estoque *produtos_cliente = lista_produtos(1,"banco_produtos.txt");
+  //Printa todos os produtos disponiveis para o cliente, armazenados na struct
+  printf("\n|--------- |Magazine-UFABC| Produtos Disponíveis a Pronta-entrega! ---------|\n");
+
+  for (int i=0;i<tam-1;i++){
+  printf("\n (%d) Produto: %s | Preço R$ %.2f", i,produtos_cliente[i].nome,produtos_cliente[i].preco);
+  }
+
+  int produto_escolhido, quantidade;
+  float total;
+  //Recebe input do produto desejado pelo cliente
+  do{
+    printf("\n\n Escolha o Número do Produto de Desejado:\n ");
+    scanf("%d", &produto_escolhido);
+  }while(produto_escolhido>tam-1||produto_escolhido<0);
+
+  //Recebe input da qtd desejada pelo cliente
+  do{
+    printf("\n Insira a Quantidade Total de Compra:\n ");
+    scanf("%d", &quantidade);
+    if(quantidade > produtos_cliente[produto_escolhido].estoque){
+      //Verfica a disponibilidade da quantia desejada no estoque
+      printf("\n Quantidade Indiponível no Estoque! Insira uma quantidade inferior");
+    }
+  }while(quantidade > produtos_cliente[produto_escolhido].estoque || quantidade<0);
+
+  //Calcula o total da compra e Mostra um resumo do pedido ao cliente
+  total = quantidade*produtos_cliente[produto_escolhido].preco;
+  printf("\n Pedido de número #%d realizado com Sucesso!\n |---------------------------------------------|\n Resumo da Compra \n Items Ordenados: %d unidade(s), %s \n Total da Compra: R$ %.2f",rand() % 8000,quantidade,produtos_cliente[produto_escolhido].nome,total);
+  free(produtos_cliente);
+  return 0;
+}
+
+int main(){
+  
+  int escolha, login;
+  //Escolhe se é cliente ou funcionário
+  do{
+    printf("\n| ******** |Magazine-UFABC| Seja bem-vindo ao Sistema de Controle de Estoque e Interface de Compra da Magazine-UFABC! ********|\n\n Por favor, escolha o seu tipo de Acesso:");
+
+    printf("\n (0) Acesso Funcionário | Controle Estoque\n (1) Acesso Cliente | Interface Compra\n ");
+
+    scanf("%d", &escolha);
+  }while(escolha!=0 && escolha!=1);
+
+  if (escolha==1){
+  //Cliente
+  comprar_cliente("banco_produtos.txt"); 
   }
   else{
-    printf("\n Acesso não autorizado!");
+  //Funcionario
+    login = login_func("Banco.txt");
+    if (login==1){
+      menu_acao_func();
+    }
+    else{
+      printf("\n Acesso não autorizado!");
+    }
   }
-}
-
-return 0;
+  return 0;
 }
