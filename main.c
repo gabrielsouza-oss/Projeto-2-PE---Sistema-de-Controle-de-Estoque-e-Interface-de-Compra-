@@ -10,13 +10,13 @@ struct produto_estoque{
   int estoque;
 };
 
-void bubbleSort(struct produto_estoque *x, int max){
+void bubbleSort(struct produto_estoque *x, int N){
   //Ordena a Stuct de Produtos com base na disponibilidade do estoque de forma crescente ou decrescente
-  int maior,cont=0;  
-  for (int i=0;i<max+1;i++){
+  int maior,cont=0,max=N;
+  for (int i=0;i<max;i++){
     maior = x[0].estoque;
     cont=0;
-    for (int j=1;j<max-1;j++){
+    for (int j=1;j<N-1;j++){
         if(x[j].estoque>maior){ 
         maior = x[j].estoque;
         cont+=1;
@@ -26,9 +26,9 @@ void bubbleSort(struct produto_estoque *x, int max){
           x[cont]=x[j];
           x[j]=temp;
           cont+=1;
-        }
+        }     
     }
-    max--;  
+    N--;  
   }
 }
 
@@ -69,7 +69,7 @@ int deletar_dados(char* filename){
       cont=1;
     }
   }while(strcmp(codigo, delete_code)!=0);
-  int max=cont;
+
   //Reseta o contador
   linha_deletar = cont;
   cont=1;
@@ -101,14 +101,12 @@ int deletar_dados(char* filename){
   ch = 'O';
   while (ch!=EOF){
       ch = getc(aquivo_banco);
+
+      if (cont!=linha_deletar &&ch!=EOF){
+          putc(ch, arquivo_temp);
+      }
       if (ch=='\n'){
           cont++;}
-      if (cont<max){
-        if (cont!=linha_deletar){
-            putc(ch, arquivo_temp);
-        }
-      }    
-
   }
   //Fecha os arquivos e Renomeia o arquivo temporário para o nome original do banco de dados
   fclose(aquivo_banco);
@@ -202,17 +200,18 @@ int login_func(char* filename){
 void add_produto (char*filename,char*cod_prod,char*nome_prod, float valor, int quantidade){
   FILE *aquivo_banco;
   aquivo_banco = fopen(filename, "a");
-  fprintf(aquivo_banco,"\n%s %s %.2f %d", cod_prod, nome_prod, valor, quantidade);
+  fprintf(aquivo_banco,"%s %s %.2f %d\n", cod_prod, nome_prod, valor, quantidade);
   printf("\nProduto Registrado com Sucesso!\n");
   fclose(aquivo_banco);
-  menu_acao_func(); 
+  menu_acao_func();
+  
 }
 
 int menu_acao_func(){
   //Menu de ações disponiveis para o funcionário, chama as demais funcoes
   int acao;
-  char *cod_prod = malloc(7*sizeof(char));
-  char *nome_prod = malloc(20*sizeof(char));
+  char*cod_prod=malloc(7*sizeof(char));
+  char*nome_prod=malloc(20*sizeof(char));
   float valor;
   int quantidade;
 
@@ -251,9 +250,6 @@ int menu_acao_func(){
       }while(quantidade<=0);
 
       add_produto("banco_produtos.txt",cod_prod,nome_prod,valor,quantidade);
-      free(cod_prod);
-      free(nome_prod);
-      return acao;
     case 3:
       return acao;
     default:
@@ -342,13 +338,13 @@ int consulta_dados_func(){
 
   switch(tipo_consulta){
     case 1:
-      for (int i=0;i<tam;i++){
+      for (int i=0;i<tam-1;i++){
       printf("\nCódigo: %s | Produto: %s",produtos_funcio[i].codigo,produtos_funcio[i].nome);
       }
       printf("\nInsira o Código do produto que deve ser consultado\n");
       scanf("%s",produto_desejado);
 
-      for (int i=0;i<tam;i++){
+      for (int i=0;i<tam-1;i++){
         if(strcmp(produtos_funcio[i].codigo,produto_desejado)==0){
           printf("\nCódigo: %s \nProduto: %s \nPreço: R$ %.2f \nQuantidade: %d\n",produtos_funcio[i].codigo,produtos_funcio[i].nome,produtos_funcio[i].preco, produtos_funcio[i].estoque);
           free(produtos_funcio); 
@@ -366,16 +362,16 @@ int consulta_dados_func(){
       }
       break;
     case 2:
-      bubbleSort(produtos_funcio,tam+1);
-      for (int i=tam-1;i>0;i--){
+      bubbleSort(produtos_funcio,tam);
+      for (int i=tam-2;i>0;i--){
       printf("\n Produto: %s | Estoque %d",produtos_funcio[i].nome,produtos_funcio[i].estoque);}
       printf("\n");
       free(produtos_funcio); 
       menu_acao_func();
       break;
     case 3:
-      bubbleSort(produtos_funcio,tam+1);
-      for (int i=0;i<tam;i++){
+      bubbleSort(produtos_funcio,tam);
+      for (int i=0;i<tam-1;i++){
       printf("\n Produto: %s | Estoque %d",produtos_funcio[i].nome,produtos_funcio[i].estoque);}
       printf("\n");
       free(produtos_funcio);
@@ -409,7 +405,7 @@ int comprar_cliente(char* filename){
   //Printa todos os produtos disponiveis para o cliente, armazenados na struct
   printf("\n|--------- |Magazine-UFABC| Produtos Disponíveis a Pronta-entrega! ---------|\n");
 
-  for (int i=0;i<tam;i++){
+  for (int i=0;i<tam-1;i++){
   printf("\n (%d) Produto: %s | Preço R$ %.2f", i,produtos_cliente[i].nome,produtos_cliente[i].preco);
   }
 
